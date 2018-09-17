@@ -44,19 +44,40 @@ def run(sdk_conn):
 
     while True:
         if current_state == IDLE:
-            latest_image = robot.world.latest_image
-            new_image = latest_image.raw_image
-            new_image = numpy.asarray(new_image)
-            features = img_clf.extract_image_features([new_image])
-            predicted = img_clf.predict_labels(features)[0]
-            if predicted == DRONE:
-                robot.say_text(predicted).wait_for_completed()
+            images = []
+            while len(images) < 4:
+                if len(images) % 2 == 0:
+                    robot.turn_in_place(angle=cozmo.util.Angle(degrees=10),
+                                        speed=cozmo.util.Angle(degrees=10)).wait_for_completed()
+                else:
+                    robot.turn_in_place(angle=cozmo.util.Angle(degrees=-10),
+                                        speed=cozmo.util.Angle(degrees=10)).wait_for_completed()
+                latest_image = robot.world.latest_image
+                new_image = latest_image.raw_image
+                new_image = numpy.asarray(new_image)
+                images.append(new_image)
+            features = img_clf.extract_image_features(images)
+            predicted_labels = img_clf.predict_labels(features)
+            predicted_dict = dict()
+            for x in predicted_labels:
+                if x in predicted_dict:
+                    predicted_dict[x] += 1
+                else:
+                    predicted_dict[x] = 1
+            max_count = 0
+            max_prediction = None
+            for x in predicted_dict:
+                if predicted_dict[x] > max_count:
+                    max_prediction = x
+                    max_count = predicted_dict[x]
+            if max_prediction == DRONE:
+                robot.say_text(max_prediction).wait_for_completed()
                 current_state = DRONE
-            elif predicted == ORDER:
-                robot.say_text(predicted).wait_for_completed()
+            elif max_prediction == ORDER:
+                robot.say_text(max_prediction).wait_for_completed()
                 current_state = ORDER
-            elif predicted == INSPECTION:
-                robot.say_text(predicted).wait_for_completed()
+            elif max_prediction == INSPECTION:
+                robot.say_text(max_prediction).wait_for_completed()
                 current_state = INSPECTION
         elif current_state == DRONE:
             robot.turn_in_place(angle=cozmo.util.Angle(degrees=90),
