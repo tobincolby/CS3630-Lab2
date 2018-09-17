@@ -58,8 +58,6 @@ def run(sdk_conn):
             elif predicted == INSPECTION:
                 robot.say_text(predicted).wait_for_completed()
                 current_state = INSPECTION
-            elif not predicted == NONE:
-                robot.say_text(predicted).wait_for_completed()
         elif current_state == DRONE:
             robot.turn_in_place(angle=cozmo.util.Angle(degrees=90),
                                 speed=cozmo.util.Angle(degrees=90)).wait_for_completed()
